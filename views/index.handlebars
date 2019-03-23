@@ -1,0 +1,80 @@
+<section class="hero is-info">
+  <div class="hero-body">
+    <div class="container">
+      <h1 class="title">
+        MotoGP News
+      </h1>
+      <a class="button is-info is-inverted">Scrape!</a>
+    </div>
+  </div>
+</section>
+
+{{#each dbArticle}}
+
+<div class="card">
+  <div class="card-content">
+    <p class="title">
+      {{this.title}}
+    </p>
+    <p class="subtitle">
+      {{this.summary}}
+    </p>
+  </div>
+  <footer class="card-footer has-background-light">
+    <p class="card-footer-item">
+      <span>
+        Read this article on <a href="{{this.link}}" target="_blank">GP One</a>
+      </span>
+    </p>
+    <p class="card-footer-item">
+      <span>
+        Leave / Read <a href="#" class="modal-opener" data-id="{{this._id}}">Comments</a>
+      </span>
+    </p>
+  </footer>
+</div>
+
+{{/each}}
+
+<div class="modal ">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Title of the article</p>
+      <button class="delete" aria-label="close"></button>
+    </header>
+    <section class="modal-card-body">
+        <input class="input" type="text" placeholder="Your name"><br><br>
+        <textarea class="textarea" placeholder="Your comment"></textarea><br>
+        <a class="button is-info">Submit</a><br><br><br>
+        <p class="subtitle">Comments:</p>
+        <article class="message is-info">
+        <div class="message-body">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque risus mi, tempus quis placerat ut, porta nec nulla. Vestibulum rhoncus ac ex sit amet fringilla. Nullam gravida purus diam, et dictum felis venenatis efficitur. Aenean ac eleifend lacus, in mollis lectus. Donec sodales, arcu et sollicitudin porttitor, tortor urna tempor ligula, id porttitor mi magna a neque. Donec dui urna, vehicula et sem eget, facilisis sodales sem. <br><br><a class="button is-danger">Delete this comment</a>
+        </div>
+        </article>
+        <article class="message is-info">
+        <div class="message-body">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque risus mi, tempus quis placerat ut, porta nec nulla. Vestibulum rhoncus ac ex sit amet fringilla. Nullam gravida purus diam, et dictum felis venenatis efficitur. Aenean ac eleifend lacus, in mollis lectus. Donec sodales, arcu et sollicitudin porttitor, tortor urna tempor ligula, id porttitor mi magna a neque. Donec dui urna, vehicula et sem eget, facilisis sodales sem. <br><br><a class="button is-danger">Delete this comment</a>
+        </div>
+        </article>
+    </section>
+  </div>
+</div>
+
+
+{{!-- <script type="text/javascript">
+
+    $(document).on("click", ".modal-opener", function(){
+        var clickedID = $(this).attr("data-id");
+        $.ajax({
+            url: "/api/burgers/" + clickedID,
+            type: "put",
+            data: {id: clickedID}
+        }).then(function(data){
+            console.log(data);
+            location.reload();
+        })
+    });
+
+</script> --}}
