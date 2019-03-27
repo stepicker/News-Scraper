@@ -26,24 +26,12 @@ app.set("view engine", "handlebars");
 
 // Connect to Mongo DB
 var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
+// var MONGODB_URI = "mongodb://localhost/mongoHeadlines";
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
 
 
 // ROUTES
 // ------------------------------------
-
-// Home route
-app.get('/', function (req, res) {
-
-  db.Article.find({})
-    .then(function(dbArticle) {
-      res.render("index", {dbArticle});
-    })
-    .catch(function(err) {
-      res.json(err);
-    });
-
-});
 
 // Route to scrape the latest news
 app.get("/scrape", function(req, res) {
@@ -51,69 +39,116 @@ app.get("/scrape", function(req, res) {
   axios.get("https://www.gpone.com/en/category/motogp").then(function(response) {
 
     var $ = cheerio.load(response.data);
-
     $("h1.field-content.title").each(function(i, element) {
-
       var result = {};
-
       result.title = $(element).children().text();
       result.summary = $(element).parent().next().children().text();
       result.link = "https://www.gpone.com" + $(element).find("a").attr("href");
   
       // Save the result in the DB
       db.Article.create(result)
-        .then(function(dbArticle) {
-          console.log(dbArticle);
+        .then(function(dbArticles) {
+          console.log(dbArticles);
         })
         .catch(function(err) {
           return res.json(err);
       });
 
     });
-
     res.redirect("/");
-
+  })
+  .catch(function(err) {
+    return res.json(err);
   });
+
 });
 
-// Route to get all articles from the DB
-app.get("/articles", function(req, res) {
+// Home route that gets all articles from the DB
+app.get('/', function (req, res) {
 
-  db.Article.find({})
-    .then(function(dbArticle) {
-      res.json(dbArticle);
+  db.Article.find({}).sort({_id: -1})
+    .then(function(dbArticles) {
+      res.render("index", {dbArticles});
     })
     .catch(function(err) {
       res.json(err);
     });
+
 });
 
-// Route to get a specific Article by ID and add a comment to it
-app.get("/articles/:id", function(req, res) {
+// Route to get all comments for a specific article
+app.get("/comments/:id", function(req, res) {
 
   db.Article.findOne({ _id: req.params.id })
-    .populate("comment")
-    .then(function(dbArticle) {
-      res.json(dbArticle);
+    .populate("comments")
+    .then(function(dbSingleArticle) {
+      console.log("Db Single Article: ", dbSingleArticle);
+      res.json(dbSingleArticle);
     })
     .catch(function(err) {
       res.json(err);
     });
+
 });
 
-// Route to save or update a comment
-app.post("/articles/:id", function(req, res) {
+// Route to save a new comment for a specific article
+app.post("/submitcomment/:id", function(req, res) {
 
   db.Comment.create(req.body)
     .then(function(dbComment) {
       return db.Article.findOneAndUpdate({ _id: req.params.id }, { $push: { comments: dbComment._id } }, { new: true });
     })
-    .then(function(dbArticle) {
-      res.json(dbArticle);
+    .then(function(dbSingleArticle) {
+      console.log("Db Single Article: ", dbSingleArticle);
+      res.json(dbSingleArticle);
     })
     .catch(function(err) {
       res.json(err);
     });
+
+});
+
+// Route to delete a comment
+app.get("/deletecomment/:id", function(req,res) {
+
+  db.Comment.deleteOne({ _id: req.params.id })
+  .then(function(dbComment) {
+    res.json(dbComment);
+  })
+  .catch(function(err) {
+    res.json(err);
+  });
+
+});
+
+// Route to delete an article
+app.get("/deletearticle/:id", function(req,res) {
+
+  db.Article.deleteOne({ _id: req.params.id })
+  .then(function(dbArticle) {
+    res.json(dbArticle);
+    console.log("Success! Updated DB: ", dbArticle);
+  })
+  .catch(function(err) {
+    res.json(err);
+    console.log("Error: ", err);
+  });
+
+});
+
+// Route to delete all articles
+app.get("/deleteallarticles", function(req,res) {
+
+  db.Article.deleteMany({ })
+  .then(function(dbArticle) {
+    res.json(dbArticle);
+    console.log("Success! Updated DB: ", dbArticle);
+  })
+  .catch(function(err) {
+    res.json(err);
+    console.log("Error: ", err);
+  });
+
 });
 
 // Start the server

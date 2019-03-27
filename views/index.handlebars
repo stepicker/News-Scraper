@@ -4,12 +4,12 @@
       <h1 class="title">
         MotoGP News
       </h1>
-      <a class="button is-info is-inverted">Scrape!</a>
+      <a class="button is-info is-inverted" href="./scrape">Scrape the latest articles!</a>
     </div>
   </div>
 </section>
 
-{{#each dbArticle}}
+{{#each dbArticles}}
 
 <div class="card">
   <div class="card-content">
@@ -28,7 +28,7 @@
     </p>
     <p class="card-footer-item">
       <span>
-        Leave / Read <a href="#" class="modal-opener" data-id="{{this._id}}">Comments</a>
+        Leave / Read <a class="modal-opener" data-id="{{this._id}}">Comments</a>
       </span>
     </p>
   </footer>
@@ -36,45 +36,96 @@
 
 {{/each}}
 
-<div class="modal ">
+
+<div class="modal">
   <div class="modal-background"></div>
   <div class="modal-card">
     <header class="modal-card-head">
-      <p class="modal-card-title">Title of the article</p>
-      <button class="delete" aria-label="close"></button>
+      <p class="modal-card-title"></p>
+      <button class="delete close-modal" aria-label="close"></button>
     </header>
     <section class="modal-card-body">
-        <input class="input" type="text" placeholder="Your name"><br><br>
-        <textarea class="textarea" placeholder="Your comment"></textarea><br>
-        <a class="button is-info">Submit</a><br><br><br>
+        <input class="input" id="user-name" type="text" placeholder="Your name"><br><br>
+        <textarea class="textarea" id="user-comment" placeholder="Your comment"></textarea>
+        <p id="confirmation-message"></p><br>
+        <a class="button is-info submit-comment">Submit</a></p><br><br><br>
         <p class="subtitle">Comments:</p>
-        <article class="message is-info">
-        <div class="message-body">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque risus mi, tempus quis placerat ut, porta nec nulla. Vestibulum rhoncus ac ex sit amet fringilla. Nullam gravida purus diam, et dictum felis venenatis efficitur. Aenean ac eleifend lacus, in mollis lectus. Donec sodales, arcu et sollicitudin porttitor, tortor urna tempor ligula, id porttitor mi magna a neque. Donec dui urna, vehicula et sem eget, facilisis sodales sem. <br><br><a class="button is-danger">Delete this comment</a>
-        </div>
-        </article>
-        <article class="message is-info">
-        <div class="message-body">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque risus mi, tempus quis placerat ut, porta nec nulla. Vestibulum rhoncus ac ex sit amet fringilla. Nullam gravida purus diam, et dictum felis venenatis efficitur. Aenean ac eleifend lacus, in mollis lectus. Donec sodales, arcu et sollicitudin porttitor, tortor urna tempor ligula, id porttitor mi magna a neque. Donec dui urna, vehicula et sem eget, facilisis sodales sem. <br><br><a class="button is-danger">Delete this comment</a>
-        </div>
-        </article>
+        <div id="existing-comments"></div>
     </section>
   </div>
 </div>
 
 
-{{!-- <script type="text/javascript">
+<script type="text/javascript">
 
-    $(document).on("click", ".modal-opener", function(){
-        var clickedID = $(this).attr("data-id");
-        $.ajax({
-            url: "/api/burgers/" + clickedID,
-            type: "put",
-            data: {id: clickedID}
-        }).then(function(data){
-            console.log(data);
-            location.reload();
-        })
+  //Function to shorten the article title
+  function titleShortener(title) {
+    if (title.length < 42) {
+      return title;
+    }
+    else {
+      return title.substring(0,42) + "...";
+    }
+  }
+
+  // Function to populate the modal with comments
+  function modalPopulator(id) {
+    $.get("/comments/" + id, function(data){
+      console.log("Comments for this article: ", data);
+      $(".modal-card-title").text(titleShortener(data.title));
+      $(".submit-comment").attr("data-id", id);
+      $("#existing-comments").html("None");
+      if (data.comments.length > 0) { $("#existing-comments").html("") };
+      for (var i = 0; i < data.comments.length; i++) {
+        $("#existing-comments").prepend("<article class='message is-info'><div class='message-body'>" + data.comments[i].body + " (by " + data.comments[i].name + ")<br><br><a class='button is-danger delete-comment' comment-id='" + data.comments[i]._id + "' article-id='" + id + "'>Delete this comment</a></div></article>");
+      };
+    })
+  }
+
+  // Open the modal to show comments
+  $(document).on("click", ".modal-opener", function(){
+    var clickedID = $(this).attr("data-id");
+    console.log("Clicked ID: ", clickedID);
+    modalPopulator(clickedID);
+    $(".modal").addClass("is-active");
+  });
+
+  // Close and clear the modal
+  $(document).on("click", ".close-modal", function() {
+    $(".modal").removeClass("is-active");
+  });
+
+  // Submit a new comment
+  $(document).on("click", ".submit-comment", function() {
+    event.preventDefault();
+    var submitID = $(this).attr("data-id");
+    var userName = $("#user-name").val().trim();
+    var userComment = $("#user-comment").val().trim();
+    $.ajax({
+      url: "/submitcomment/" + submitID,
+      type: "post",
+      data: {"name": userName, "body": userComment}
+    }).done(function(response){
+      console.log("DB updated with new comment: ", response);
+      modalPopulator(submitID);
+      $("#user-name").val("");
+      $("#user-comment").val("");
+      $("#confirmation-message").text("Your comment has been successfully posted! (See below)");
+      setTimeout(function(){ $("#confirmation-message").text(""); }, 5000);
+    }).fail(function(error){
+      console.log(error);
+    })
+  });
+
+  // Delete a comment
+  $(document).on("click", ".delete-comment", function() {
+    var clickedCommentID = $(this).attr("comment-id");
+    var currentArticleID = $(this).attr("article-id");
+    console.log("Deleting comment ", clickedCommentID);
+    $.get("/deletecomment/" + clickedCommentID, function(data) {
+      console.log("Response after deleting comment: ", data);
+      modalPopulator(currentArticleID);
     });
+  });
 
-</script> --}}
+</script>
