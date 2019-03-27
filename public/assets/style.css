@@ -3,5 +3,6 @@ body {
 }
 
 #confirmation-message {
-    color: green;
+    color: #209cee;
+    font-weight: bold;
 }
